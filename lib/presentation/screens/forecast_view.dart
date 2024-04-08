@@ -16,7 +16,9 @@ class ForecastView extends StatefulWidget {
 class _ForecastViewState extends State<ForecastView> {
   final WeatherFactory _weatherFactory = WeatherFactory(open_weather_api_key);
 
-  late List<Weather?> _weather;
+  // Change the declaration of _weather to initialize it as an empty list.
+  List<Weather?> _weather = [];
+
   @override
   void initState() {
     super.initState();
@@ -68,34 +70,6 @@ class _ForecastViewState extends State<ForecastView> {
     return await Geolocator.getCurrentPosition();
   }
 
-  final List<ForecastWeatherData> forecastData = [
-    ForecastWeatherData(
-        date: DateTime.now().add(Duration(days: 1)),
-        minTemperature: 10.0,
-        maxTemperature: 20.0,
-        description: "Sunny"),
-    ForecastWeatherData(
-        date: DateTime.now().add(Duration(days: 2)),
-        minTemperature: 11.0,
-        maxTemperature: 19.0,
-        description: "Partly Cloudy"),
-    ForecastWeatherData(
-        date: DateTime.now().add(Duration(days: 3)),
-        minTemperature: 12.0,
-        maxTemperature: 18.0,
-        description: "Cloudy"),
-    ForecastWeatherData(
-        date: DateTime.now().add(Duration(days: 4)),
-        minTemperature: 9.0,
-        maxTemperature: 17.0,
-        description: "Rainy"),
-    ForecastWeatherData(
-        date: DateTime.now().add(Duration(days: 5)),
-        minTemperature: 8.0,
-        maxTemperature: 16.0,
-        description: "Windy"),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,15 +93,12 @@ class _ForecastViewState extends State<ForecastView> {
                   title: Text(weather?.date != null
                       ? DateFormat('EEEE, MMMm d').format(weather!.date!)
                       : 'Date not available'),
-                  subtitle: Row(
-                    children: [
-                      Text(weather?.weatherDescription ??
-                          'Description not available'),
-                      Text(weather!.areaName ?? 'not available'),
-                    ],
+                  subtitle: Text(
+                    weather?.weatherDescription ?? 'Description not available',
+                    style: TextStyle(fontSize: 12),
                   ),
                   trailing: Text(
-                      '${weather?.tempMin ?? 'Not available.'} - ${weather?.tempMax ?? 'Not available.'}'),
+                      '${weather!.tempMin?.celsius?.toStringAsFixed(0) ?? 'Not available.'}°C - ${weather?.tempMax?.celsius?.toStringAsFixed(0) ?? 'Not available.'}°C'),
                 );
               },
             ),

@@ -1,58 +1,107 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
+import 'package:weather/weather.dart';
+import 'package:weather_app/common/api_constant.dart';
 
-class HistoricalWeatherData {
-  final DateTime date;
-  final double temperature;
-  final String description;
+import '../../common/forecast_weather_data.dart';
 
-  HistoricalWeatherData(
-      {required this.date,
-      required this.temperature,
-      required this.description});
+class HistoricalView extends StatefulWidget {
+  const HistoricalView({super.key});
+
+  @override
+  State<HistoricalView> createState() => _HistoricalViewState();
 }
 
-class HistoricalView extends StatelessWidget {
-  final List<HistoricalWeatherData> historicalData = [
-    HistoricalWeatherData(
-        date: DateTime.now().subtract(Duration(days: 1)),
-        temperature: 20.0,
-        description: "Sunny"),
-    HistoricalWeatherData(
-        date: DateTime.now().subtract(Duration(days: 2)),
-        temperature: 18.5,
-        description: "Cloudy"),
-    HistoricalWeatherData(
-        date: DateTime.now().subtract(Duration(days: 3)),
-        temperature: 15.0,
-        description: "Rainy"),
-    HistoricalWeatherData(
-        date: DateTime.now().subtract(Duration(days: 4)),
-        temperature: 22.0,
-        description: "Sunny"),
-    HistoricalWeatherData(
-        date: DateTime.now().subtract(Duration(days: 5)),
-        temperature: 16.0,
-        description: "Windy"),
-  ];
+class _HistoricalViewState extends State<HistoricalView> {
+  final WeatherFactory _weatherFactory = WeatherFactory(open_weather_api_key);
+
+  // Change the declaration of _weather to initialize it as an empty list.
+  List<Weather?> _weather = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _determinePosition().then((Position position) {
+      _weatherFactory
+          .fiveDayForecastByLocation(position.latitude, position.longitude)
+          .then((value) {
+        setState(() {
+          _weather = value;
+        });
+      });
+    });
+  }
+
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Test if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // Location services are not enabled don't continue
+      // accessing the position and request users of the
+      // App to enable the location services.
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, next time you could try
+        // requesting permissions again (this is also where
+        // Android's shouldShowRequestPermissionRationale
+        // returned true. According to Android guidelines
+        // your App should show an explanatory UI now.
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are denied forever, handle appropriately.
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    // When we reach here, permissions are granted and we can
+    // continue accessing the position of the device.
+    return await Geolocator.getCurrentPosition();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Historical Weather Data'),
+        title: const Text('5-Day Weather Forecast'),
       ),
-      body: ListView.builder(
-        itemCount: historicalData.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(
-                DateFormat('yyyy-MM-dd').format(historicalData[index].date)),
-            subtitle: Text(historicalData[index].description),
-            trailing: Text('${historicalData[index].temperature}°C'),
-          );
-        },
-      ),
+      body: (_weather == null)
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: _weather.length,
+              itemBuilder: (context, index) {
+                final weather = _weather[index];
+                return ListTile(
+                  leading: Container(
+                    height: MediaQuery.sizeOf(context).height * 0.2,
+                    child: Image(
+                      image: NetworkImage(
+                          'https://openweathermap.org/img/wn/${weather?.weatherIcon}@4x.png'),
+                    ),
+                  ),
+                  title: Text(weather?.date != null
+                      ? DateFormat('EEEE, MMMm d').format(weather!.date!)
+                      : 'Date not available'),
+                  subtitle: Text(
+                    weather?.weatherDescription ?? 'Description not available',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  trailing: Text(
+                      '${weather!.tempMin?.celsius?.toStringAsFixed(0) ?? 'Not available.'}°C - ${weather?.tempMax?.celsius?.toStringAsFixed(0) ?? 'Not available.'}°C'),
+                );
+              },
+            ),
     );
   }
 }
