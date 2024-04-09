@@ -81,7 +81,7 @@ class MapViewState extends State<MapView> {
                       ),
                       child: const Icon(
                         Icons.arrow_back_rounded,
-                        color: Colors.white,
+                        color: Colors.blueAccent,
                       ),
                     ),
                   ),
@@ -96,7 +96,7 @@ class MapViewState extends State<MapView> {
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.blue,
-                            fontSize: 18,
+                            fontSize: 16,
                           ),
                         ),
                       ),
@@ -121,7 +121,7 @@ class MapViewState extends State<MapView> {
                       ),
                       child: const Icon(
                         Icons.arrow_forward_rounded,
-                        color: Colors.white,
+                        color: Colors.blueAccent,
                       ),
                     ),
                   ),
