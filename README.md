@@ -16,3 +16,4 @@ For help getting started with Flutter development, view the
 samples, guidance on mobile development, and a full API reference.
 ![Simulator Screenshot - iPhone 15 Pro Max - 2024-04-09 at 15 53 50](https://github.com/tanny99/weather_app/assets/55141974/e815586d-4a92-482f-9a37-332bc56890b5)
 
+![Simulator Screenshot - iPhone 15 Pro Max - 2024-04-09 at 16 47 18](https://github.com/tanny99/weather_app/assets/55141974/32b180fb-e9f0-4bd5-bb52-3c8631f5c448)
