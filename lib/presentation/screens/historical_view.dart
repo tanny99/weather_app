@@ -1,107 +1,66 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:intl/intl.dart';
-import 'package:weather/weather.dart';
-import 'package:weather_app/common/api_constant.dart';
-
-import '../../common/forecast_weather_data.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:weather_app/data/models/historical_weather.dart';
+import 'package:weather_app/presentation/bloc/historical_weather/weather_bloc.dart';
+import 'package:weather_app/presentation/bloc/historical_weather/weather_event.dart';
+import 'package:weather_app/presentation/bloc/historical_weather/weather_state.dart';
 
 class HistoricalView extends StatefulWidget {
-  const HistoricalView({super.key});
-
   @override
-  State<HistoricalView> createState() => _HistoricalViewState();
+  _HistoricalViewState createState() => _HistoricalViewState();
 }
 
 class _HistoricalViewState extends State<HistoricalView> {
-  final WeatherFactory _weatherFactory = WeatherFactory(open_weather_api_key);
-
-  // Change the declaration of _weather to initialize it as an empty list.
-  List<Weather?> _weather = [];
-
   @override
   void initState() {
     super.initState();
-    _determinePosition().then((Position position) {
-      _weatherFactory
-          .fiveDayForecastByLocation(position.latitude, position.longitude)
-          .then((value) {
-        setState(() {
-          _weather = value;
-        });
-      });
-    });
-  }
+    // Example parameters - replace with actual values and possibly user input
+    final double lat = 40.7128;
+    final double lon = -74.0060;
+    final int start =
+        DateTime.now().subtract(Duration(days: 1)).millisecondsSinceEpoch ~/
+            1000; // 1 day ago
+    print('Start and END');
+    print(start);
+    final int end = DateTime.now().millisecondsSinceEpoch ~/ 1000; // now
+    print(end);
+    final String apiKey =
+        '0da716ee8d196d0976801cec25a26480'; // Use your real API key here
 
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    // Test if location services are enabled.
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      // Location services are not enabled don't continue
-      // accessing the position and request users of the
-      // App to enable the location services.
-      return Future.error('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        // Permissions are denied, next time you could try
-        // requesting permissions again (this is also where
-        // Android's shouldShowRequestPermissionRationale
-        // returned true. According to Android guidelines
-        // your App should show an explanatory UI now.
-        return Future.error('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      // Permissions are denied forever, handle appropriately.
-      return Future.error(
-          'Location permissions are permanently denied, we cannot request permissions.');
-    }
-
-    // When we reach here, permissions are granted and we can
-    // continue accessing the position of the device.
-    return await Geolocator.getCurrentPosition();
+    BlocProvider.of<WeatherBloc>(context)
+        .add(FetchWeather(lat, lon, start, end, apiKey));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('5-Day Weather Forecast'),
+        title: Text('Historical Weather Data'),
       ),
-      body: (_weather == null)
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _weather.length,
+      body: BlocBuilder<WeatherBloc, WeatherState>(
+        builder: (context, state) {
+          if (state is WeatherLoading) {
+            return Center(child: CircularProgressIndicator());
+          } else if (state is WeatherLoaded) {
+            return ListView.builder(
+              itemCount: state.weather.length,
               itemBuilder: (context, index) {
-                final weather = _weather[index];
+                final Weather weather = state.weather[index];
                 return ListTile(
-                  leading: Container(
-                    height: MediaQuery.sizeOf(context).height * 0.2,
-                    child: Image(
-                      image: NetworkImage(
-                          'https://openweathermap.org/img/wn/${weather?.weatherIcon}@4x.png'),
-                    ),
-                  ),
-                  title: Text(weather?.date != null
-                      ? DateFormat('EEEE, MMMm d').format(weather!.date!)
-                      : 'Date not available'),
+                  title: Text('Temperature: ${weather.temp.toString()}°'),
                   subtitle: Text(
-                    weather?.weatherDescription ?? 'Description not available',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  trailing: Text(
-                      '${weather!.tempMin?.celsius?.toStringAsFixed(0) ?? 'Not available.'}°C - ${weather?.tempMax?.celsius?.toStringAsFixed(0) ?? 'Not available.'}°C'),
+                      'Humidity: ${weather.humidity}%\nWind Speed: ${weather.windSpeed} m/s'),
                 );
               },
-            ),
+            );
+          } else if (state is WeatherError) {
+            return Center(child: Text('Failed to fetch weather data'));
+          } else {
+            return Center(
+                child: Text('Enter details to fetch historical weather data'));
+          }
+        },
+      ),
     );
   }
 }

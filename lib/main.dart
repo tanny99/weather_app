@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:weather_app/presentation/bloc/historical_weather/weather_bloc.dart';
 import 'package:weather_app/presentation/screens/forecast_view.dart';
+import 'domain/entities/repositories/weather_repository.dart';
 import 'presentation/screens/map_view.dart';
 import 'presentation/screens/historical_view.dart'; // Make sure to create this file
 
@@ -8,12 +11,16 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  final WeatherRepository weatherRepository = WeatherRepository();
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Weather App',
-      home: WeatherApp(),
+      home: BlocProvider(
+        create: (context) => WeatherBloc(weatherRepository),
+        child: WeatherApp(),
+      ),
     );
   }
 }
@@ -28,7 +35,7 @@ class _WeatherAppState extends State<WeatherApp> {
 
   final List<Widget> _children = [
     ForecastView(), // Placeholder for Forecast View
-    HistoricalView(), // Historical View
+    HistoricalView(),
     MapView(), // Placeholder for Map View
   ];
 

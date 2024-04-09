@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:weather/weather.dart';
@@ -78,29 +79,44 @@ class _ForecastViewState extends State<ForecastView> {
       ),
       body: (_weather == null)
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _weather.length,
-              itemBuilder: (context, index) {
-                final weather = _weather[index];
-                return ListTile(
-                  leading: Container(
-                    height: MediaQuery.sizeOf(context).height * 0.2,
+          : Stack(
+              children: [
+                SizedBox.expand(
+                  child: Opacity(
+                    opacity: 0.5,
                     child: Image(
-                      image: NetworkImage(
-                          'https://openweathermap.org/img/wn/${weather?.weatherIcon}@4x.png'),
+                      image: AssetImage('assets/images/weather_wallpaper.jpg'),
+                      fit: BoxFit
+                          .cover, // This will cover the whole screen, possibly cropping the image.
                     ),
                   ),
-                  title: Text(weather?.date != null
-                      ? DateFormat('EEEE, MMMm d').format(weather!.date!)
-                      : 'Date not available'),
-                  subtitle: Text(
-                    weather?.weatherDescription ?? 'Description not available',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  trailing: Text(
-                      '${weather!.tempMin?.celsius?.toStringAsFixed(0) ?? 'Not available.'}°C - ${weather?.tempMax?.celsius?.toStringAsFixed(0) ?? 'Not available.'}°C'),
-                );
-              },
+                ),
+                ListView.builder(
+                  itemCount: _weather.length,
+                  itemBuilder: (context, index) {
+                    final weather = _weather[index];
+                    return ListTile(
+                      leading: Container(
+                        height: MediaQuery.sizeOf(context).height * 0.2,
+                        child: Image(
+                          image: NetworkImage(
+                              'https://openweathermap.org/img/wn/${weather?.weatherIcon}@4x.png'),
+                        ),
+                      ),
+                      title: Text(weather?.date != null
+                          ? DateFormat('EEEE, MMMm d').format(weather!.date!)
+                          : 'Date not available'),
+                      subtitle: Text(
+                        weather?.weatherDescription ??
+                            'Description not available',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      trailing: Text(
+                          '${weather!.tempMin?.celsius?.toStringAsFixed(0) ?? 'Not available.'}°C - ${weather?.tempMax?.celsius?.toStringAsFixed(0) ?? 'Not available.'}°C'),
+                    );
+                  },
+                ),
+              ],
             ),
     );
   }
